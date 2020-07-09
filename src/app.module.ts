@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { FileDownloadModule } from './file-download/file-download.module';
 import { TerritoryStatusModule } from './territory-status/territory-status.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import { DataTransformModule } from './data-transform/data-transform.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { MongooseModule } from '@nestjs/mongoose';
       }),
       inject: [ConfigService],
     }),
+    DataTransformModule,
   ],
   controllers: [AppController],
   providers: [AppService],

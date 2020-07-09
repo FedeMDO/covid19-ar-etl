@@ -1,0 +1,15 @@
+filtrar por ID territorio 
+agrupar por fecha_apertura
+    por cada fecha distinta se crea un obj
+    longitud de la agrupación: nuevos casos
+    longitud de todos los grupos hasta la fecha de este grupo incluida: casos totales
+
+filtrar por ID territorio
+agrupar por fecha_fallecimiento
+    por cada fecha distinta se crea un obj
+    longitud de la agrupación: nuevas muertes
+    longitud de todos los grupos hasta la fecha de este grupo incluida: muertes totales
+
+merge de objetos con casos confirmados y muertes vía id+fecha
+
+TODO: trabajar recuperados con 14 días sin morir y sin terapia intensiva actual.

@@ -8,11 +8,11 @@ export class FileDownloadService {
   async parseCsvStringToArray(
     csvDataStr: string,
   ): Promise<papa.ParseResult<any>> {
-    // const decoded: string = fs.readFileSync(
-    //   `C:\\Users\\FedericoMontesdeOca\\Downloads\\Covid19Casos (2).csv`,
-    //   { encoding: 'utf16le' },
-    // );
-    const parsed = papa.parse(csvDataStr, {
+    const decoded: string = fs.readFileSync(
+      `C:\\Users\\FedericoMontesdeOca\\Downloads\\Covid19Casos (3).csv`,
+      { encoding: 'utf16le' },
+    );
+    const parsed = papa.parse(decoded, {
       encoding: 'utf16le',
       header: true,
       transformHeader: function(header) {
@@ -84,4 +84,24 @@ export class FileDownloadService {
     }
     parsed.data = result;
   }
+
+  // transformDates(parsed: papa.ParseResult<any>): void {
+  //   const keysConFecha = parsed.meta.fields.filter(f => f.includes('fecha'));
+  //   for (let i = parsed.data.length; i--; ) {
+  //     const obj = parsed.data[i];
+  //     for (const key of keysConFecha) {
+  //       obj[key] = this.localDateToIso8601(obj[key]);
+  //     }
+  //   }
+  // }
+
+  // localDateToIso8601(dateStr: string): string {
+  //   const result =
+  //     dateStr.substr(6, 4) + // yyyy
+  //     '-' +
+  //     dateStr.substr(3, 2) + // mm
+  //     '-' +
+  //     dateStr.substr(0, 2); // dd
+  //   return result;
+  // }
 }

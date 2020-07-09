@@ -14,8 +14,20 @@ export class TerritoryStatusService {
   async create(
     territoryStatusDTO: TerritoryStatusDTO,
   ): Promise<TerritoryStatus> {
-    const createdCat = new this.territoryStatusModel(territoryStatusDTO);
-    return createdCat.save();
+    const created = new this.territoryStatusModel(territoryStatusDTO);
+    return created.save();
+  }
+
+  async createBulk(territorioStatuses: Array<TerritoryStatusDTO>) {
+    const writes = territorioStatuses.map(ts => {
+      return { insertOne: { document: ts } };
+    });
+    return this.territoryStatusModel.bulkWrite(writes, { ordered: false });
+  }
+
+  async deleteAll(): Promise<any> {
+    const res = this.territoryStatusModel.deleteMany({});
+    return res;
   }
 
   async findAll(): Promise<TerritoryStatus[]> {

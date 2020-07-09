@@ -9,63 +9,71 @@ import {
 } from '@nestjs/common';
 import { FileDownloadService } from './file-download.service';
 import { IGetCsvFileParams } from './file-download.interfaces';
-import { TerritoryStatusService } from 'src/territory-status/territory-status.service';
+import { TerritoryStatusService } from '../territory-status/territory-status.service';
+import { DataTransformService } from '../data-transform/data-transform.service';
+import {
+  TerritorioTipo,
+  ProvinciaCodigo,
+} from 'src/data-transform/data-transform.consts';
+import { stringify } from 'querystring';
 
 @Controller('file-download')
 export class FileDownloadController {
   constructor(
     private readonly fileDownloadService: FileDownloadService,
-    private readonly territoryStatusService: TerritoryStatusService,
+    private readonly territoryStatusService: TerritoryStatusService, // eliminar
+    private readonly dataTransformService: DataTransformService,
     private httpClient: HttpService,
   ) {}
 
   @Get()
   async testEscribirBd(): Promise<any> {
-    const res = await this.territoryStatusService.create({
-      TerritorioID: '1',
-      TerritorioNombre: 'Buenos Aires',
-      TerritorioTipo: 'PROV',
-      Fecha: '2020-05-07',
-      Confirmados: {
-        Nuevos: 10,
-        Total: 1000,
-      },
-      Muertes: {
-        Nuevos: 5,
-        Total: 50,
-      },
-    });
-    return res;
+    // const res = await this.territoryStatusService.create({
+    //   TerritorioID: '1',
+    //   TerritorioNombre: 'Buenos Aires',
+    //   TerritorioTipo: 'PROV',
+    //   Fecha: '2020-05-07',
+    //   Confirmados: {
+    //     Nuevos: 10,
+    //     Total: 1000,
+    //   },
+    //   Muertes: {
+    //     Nuevos: 5,
+    //     Total: 50,
+    //   },
+    // });
+    const deleted = await this.territoryStatusService.deleteAll();
+    return deleted;
   }
 
   @Post()
-  async getCsvFile(@Body() params: IGetCsvFileParams): Promise<void> {
+  async getCsvFile(@Body() params: IGetCsvFileParams): Promise<any> {
     // test input
     if (!params.url && typeof params.url !== 'string') {
       throw new BadRequestException();
     }
 
     // query endpoint
-    Logger.log(
-      `starting download at ${params.url}`,
-      FileDownloadController.name,
-    );
-    console.time('time to download');
-    const res = await this.httpClient.get(params.url).toPromise();
-    console.timeEnd('time to download');
-    if (res.data && res.data.length) {
-      Logger.log(
-        `downloaded data size in KB: ${Math.ceil(res.data.length / 1024)}`,
-        FileDownloadController.name,
-      );
-    }
+    // Logger.log(
+    //   `starting download at ${params.url}`,
+    //   FileDownloadController.name,
+    // );
+    // console.time('time to download');
+    // const res = await this.httpClient.get(params.url).toPromise();
+    // console.timeEnd('time to download');
+    // if (res.data && res.data.length) {
+    //   Logger.log(
+    //     `downloaded data size in KB: ${Math.ceil(res.data.length / 1024)}`,
+    //     FileDownloadController.name,
+    //   );
+    // }
 
-    if (typeof res.data !== 'string') {
-      throw new Error('bad remote csv. check url');
-    }
+    // if (typeof res.data !== 'string') {
+    //   throw new Error('bad remote csv. check url');
+    // }
     console.time('time preprocessing');
     const parsed = await this.fileDownloadService.parseCsvStringToArray(
-      res.data,
+      'res.data', // res.data,
     );
     // Logger.log(parsed.meta, FileDownloadController.name);
     Logger.log(
@@ -104,6 +112,64 @@ export class FileDownloadController {
       );
     }
     console.timeEnd('time preprocessing');
-    // Logger.log(parsed.meta.fields, FileDownloadController.name);
+
+    console.time('time PROCESSING');
+    Logger.log(parsed.meta.fields, FileDownloadController.name);
+
+    const provinciasData = [];
+
+    const mapProvs = parsed.data.map(caso => {
+      return {
+        TerritorioID: ProvinciaCodigo[caso['carga_provincia_nombre']],
+        TerritorioNombre: caso['carga_provincia_nombre'],
+        TerritorioTipo: TerritorioTipo.Provincia,
+      };
+    });
+
+    for (const provId of [...new Set(mapProvs.map(x => x.TerritorioID))]) {
+      const found = mapProvs.find(x => x.TerritorioID === provId);
+      provinciasData.push({
+        territorio: found,
+        casos: parsed.data.filter(
+          caso => caso['carga_provincia_nombre'] === found.TerritorioNombre,
+        ),
+      });
+    }
+
+    const territoriosInfoReducida = [];
+
+    // info provincias
+    for (const provinciaData of provinciasData) {
+      territoriosInfoReducida.push(
+        ...this.dataTransformService.construirTerritorioStatus(
+          provinciaData.casos,
+          provinciaData.territorio.TerritorioID,
+          provinciaData.territorio.TerritorioNombre,
+          provinciaData.territorio.TerritorioTipo,
+        ),
+      );
+    }
+
+    // info pais
+    territoriosInfoReducida.push(
+      ...this.dataTransformService.construirTerritorioStatus(
+        parsed.data,
+        'ARG',
+        'Argentina',
+        TerritorioTipo.Pais,
+      ),
+    );
+
+    console.timeEnd('time PROCESSING');
+    Logger.log(
+      `PROCEDING TO WRITE DB WITH ${territoriosInfoReducida.length} ENTRIES`,
+      FileDownloadController.name,
+    );
+
+    // clean bd
+    await this.territoryStatusService.deleteAll();
+
+    // insert in bulk
+    return this.territoryStatusService.createBulk(territoriosInfoReducida);
   }
 }

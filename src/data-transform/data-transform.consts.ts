@@ -1,0 +1,32 @@
+export enum TerritorioTipo {
+  Pais = 'PAIS',
+  Provincia = 'PROV',
+  Departamento = 'DEPA',
+}
+
+export enum ProvinciaCodigo {
+  'CABA' = '02',
+  'Córdoba' = '14',
+  'Buenos Aires' = '06',
+  'Río Negro' = '62',
+  'Chaco' = '22',
+  'San Luis' = '74',
+  'Tierra del Fuego' = '94',
+  'Santa Fe' = '82',
+  'Entre Ríos' = '30',
+  'Tucumán' = '90',
+  'Jujuy' = '38',
+  'Salta' = '66',
+  'Santa Cruz' = '78',
+  'Neuquén' = '58',
+  'Santiago del Estero' = '86',
+  'Mendoza' = '50',
+  'Corrientes' = '18',
+  'La Pampa' = '42',
+  'Misiones' = '54',
+  'La Rioja' = '46',
+  'San Juan' = '70',
+  'Chubut' = '26',
+  'Formosa' = '34',
+  'Catamarca' = '10',
+}
