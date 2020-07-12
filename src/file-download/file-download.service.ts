@@ -1,18 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import * as papa from 'papaparse';
 import { IDataFilter } from './file-download.interfaces';
-import * as fs from 'fs';
 
 @Injectable()
 export class FileDownloadService {
   async parseCsvStringToArray(
     csvDataStr: string,
   ): Promise<papa.ParseResult<any>> {
-    const decoded: string = fs.readFileSync(
-      `C:\\Users\\FedericoMontesdeOca\\Downloads\\Covid19Casos (3).csv`,
-      { encoding: 'utf16le' },
-    );
-    const parsed = papa.parse(decoded, {
+    // const decoded: string = fs.readFileSync(
+    //   `C:\\Users\\FedericoMontesdeOca\\Downloads\\Covid19Casos (4).csv`,
+    //   { encoding: 'utf16le' },
+    // );
+    const parsed = papa.parse(csvDataStr, {
       encoding: 'utf16le',
       header: true,
       transformHeader: function(header) {

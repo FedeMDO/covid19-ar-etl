@@ -6,7 +6,7 @@ import { DataTransformModule } from '../data-transform/data-transform.module';
 
 @Module({
   providers: [FileDownloadService],
-  imports: [HttpModule, TerritoryStatusModule, DataTransformModule],
+  imports: [TerritoryStatusModule, DataTransformModule],
   controllers: [FileDownloadController],
 })
 export class FileDownloadModule {}

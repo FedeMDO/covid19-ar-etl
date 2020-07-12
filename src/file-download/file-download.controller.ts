@@ -15,7 +15,7 @@ import {
   TerritorioTipo,
   ProvinciaCodigo,
 } from 'src/data-transform/data-transform.consts';
-import { stringify } from 'querystring';
+import * as axios from 'axios';
 
 @Controller('file-download')
 export class FileDownloadController {
@@ -23,7 +23,6 @@ export class FileDownloadController {
     private readonly fileDownloadService: FileDownloadService,
     private readonly territoryStatusService: TerritoryStatusService, // eliminar
     private readonly dataTransformService: DataTransformService,
-    private httpClient: HttpService,
   ) {}
 
   @Get()
@@ -54,26 +53,32 @@ export class FileDownloadController {
     }
 
     // query endpoint
-    // Logger.log(
-    //   `starting download at ${params.url}`,
-    //   FileDownloadController.name,
-    // );
-    // console.time('time to download');
-    // const res = await this.httpClient.get(params.url).toPromise();
-    // console.timeEnd('time to download');
-    // if (res.data && res.data.length) {
-    //   Logger.log(
-    //     `downloaded data size in KB: ${Math.ceil(res.data.length / 1024)}`,
-    //     FileDownloadController.name,
-    //   );
-    // }
+    Logger.log(
+      `starting download at ${params.url}`,
+      FileDownloadController.name,
+    );
+    console.time('time to download');
+    const requestConfig = {
+      url: params.url,
+      responseEncoding: 'utf16le',
+    };
 
-    // if (typeof res.data !== 'string') {
-    //   throw new Error('bad remote csv. check url');
-    // }
+    const res = await axios.default.request(requestConfig);
+
+    console.timeEnd('time to download');
+    if (res.data && res.data.length) {
+      Logger.log(
+        `downloaded data size in KB: ${Math.ceil(res.data.length / 1024)}`,
+        FileDownloadController.name,
+      );
+    }
+
+    if (typeof res.data !== 'string') {
+      throw new Error('bad remote csv. check url');
+    }
     console.time('time preprocessing');
     const parsed = await this.fileDownloadService.parseCsvStringToArray(
-      'res.data', // res.data,
+      res.data, // res.data,
     );
     // Logger.log(parsed.meta, FileDownloadController.name);
     Logger.log(
@@ -167,9 +172,11 @@ export class FileDownloadController {
     );
 
     // clean bd
-    await this.territoryStatusService.deleteAll();
-
-    // insert in bulk
-    return this.territoryStatusService.createBulk(territoriosInfoReducida);
+    if (territoriosInfoReducida.length) {
+      await this.territoryStatusService.deleteAll();
+      // insert in b
+      return this.territoryStatusService.createBulk(territoriosInfoReducida);
+    }
+    throw new Error('Error with data');
   }
 }
